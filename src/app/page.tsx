@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 // Get posts data from API
-async function getPosts(): Promise<Post[] | null> {
+async function getPosts(): Promise<Post[] | null | undefined> {
   const res = await fetch("https://jsonplaceholder.typicode.com/posts");
   return res.json();
 

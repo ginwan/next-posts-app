@@ -4,7 +4,7 @@ import { Post } from '@/lib/types'
 import Link from 'next/link'
 
 type Props = {
-    posts: Post[]
+    posts: Post[] | null | undefined
     isLoading: boolean
 }
 
