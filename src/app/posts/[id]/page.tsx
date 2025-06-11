@@ -1,5 +1,6 @@
 'use client'
 
+import { AlertDemo } from '@/components/Alert'
 import PostForm from '@/components/Form'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -25,6 +26,7 @@ const deletePost = async (id: string) => {
 
 const PostDetails = () => {
     const [open, setOpen] = useState(false)
+    const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const params = useParams()
     const router = useRouter()
     const id = params?.id as string
@@ -42,12 +44,17 @@ const PostDetails = () => {
         mutationFn: () => deletePost(id),
         onSuccess: () => {
             queryClient.removeQueries({ queryKey: ['post', id] })
+            setAlert({ type: "success", message: "Post deleted successfully." });
             router.push('/') // navigate after delete
+        },
+        onError: () => {
+            setAlert({ type: "error", message: "Failed to delete post." });
         },
     })
 
     return (
         <div>
+            {alert && <AlertDemo type={alert.type} message={alert.message} />}
             {!isLoading && post && (
                 <PostForm open={open} setOpen={setOpen} post={post} />
             )}

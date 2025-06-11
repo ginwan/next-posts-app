@@ -1,4 +1,4 @@
-import { Bold, Heading2, Italic, List, ListOrdered, Strikethrough } from 'lucide-react'
+import { Bold, Heading2, Italic, Strikethrough } from 'lucide-react'
 import { type Editor } from '@tiptap/react'
 import { Toggle } from './ui/toggle'
 
@@ -7,7 +7,7 @@ type Props = {
 }
 const ToolbarComponent = ({ editor }: Props) => {
     return (
-        <div className="border border-input bg-transparent">
+        <div className="border border-input bg-transparent rounded-md">
             <Toggle
                 size="sm"
                 pressed={editor?.isActive("heading")}
@@ -35,20 +35,6 @@ const ToolbarComponent = ({ editor }: Props) => {
                 onPressedChange={() => editor?.chain().focus().toggleStrike().run()}
             >
                 <Strikethrough />
-            </Toggle>
-            <Toggle
-                size="sm"
-                pressed={editor?.isActive("bulletList")}
-                onPressedChange={() => editor?.chain().focus().toggleBulletList().run()}
-            >
-                <List />
-            </Toggle>
-            <Toggle
-                size="sm"
-                pressed={editor?.isActive("OrderedList")}
-                onPressedChange={() => editor?.chain().focus().toggleOrderedList().run()}
-            >
-                <ListOrdered />
             </Toggle>
         </div>
     )

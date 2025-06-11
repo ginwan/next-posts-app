@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
@@ -8,6 +8,7 @@ import { Button } from './ui/button'
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
 import { useMutation } from '@tanstack/react-query'
 import { Post } from '@/lib/types'
+import { AlertDemo } from './Alert'
 
 
 type Props = {
@@ -16,31 +17,9 @@ type Props = {
     post?: Post
 }
 
-// create post service
-// export const createPost = async (data: { title: string }) => {
-//     const res = await fetch('https://jsonplaceholder.typicode.com/posts', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(data),
-//     })
-
-//     return res.json()
-// }
-
-// update post service
-// const updatePost = async (data: { id: string; title: string; body: string }) => {
-//     const res = await fetch(`/api/posts/${data.id}`, {
-//         method: 'PUT',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify(data),
-//     })
-//     return res.json()
-// }
-
 
 const PostForm = ({ open, setOpen, post }: Props) => {
+    const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const formSchema = z.object({
         title: z.string().min(3, { message: "Title must be at least 3 characters" }),
         body: z.string().min(5, { message: "Body must be at least 5 characters" })
@@ -67,8 +46,11 @@ const PostForm = ({ open, setOpen, post }: Props) => {
         onSuccess: () => {
             setOpen(false)
             form.reset()
-            // onSuccess?.()
+            setAlert({ type: "success", message: "Post created successfully." });
         },
+        onError: () => {
+            setAlert({ type: "error", message: "Failed to create post." });
+        }
     });
 
     // For updating
@@ -83,8 +65,11 @@ const PostForm = ({ open, setOpen, post }: Props) => {
         onSuccess: () => {
             setOpen(false)
             form.reset()
-            // onSuccess?.()
+            setAlert({ type: "success", message: "Post Updated successfully." });
         },
+        onError: () => {
+            setAlert({ type: "error", message: "Failed to update post." });
+        }
     });
 
 
@@ -97,71 +82,84 @@ const PostForm = ({ open, setOpen, post }: Props) => {
         }
     }
 
+    useEffect(() => {
+        if (alert) {
+            const timer = setTimeout(() => {
+                setAlert(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [alert]);
 
 
     return (
         <div>
-            {
-                <Dialog open={open} onOpenChange={setOpen}>
-                    <Form {...form}>
-                        <DialogContent className="sm:max-w-[550px] w-full">
-                            <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col gap-4 justify-center'>
-                                <DialogHeader>
-                                    <DialogTitle>Create New Post</DialogTitle>
-                                </DialogHeader>
+            {alert && <AlertDemo type={alert.type} message={alert.message} />}
+            <Dialog open={open} onOpenChange={setOpen}>
+                <Form {...form}>
+                    <DialogContent className="sm:max-w-[550px] w-full">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col gap-4 justify-center'>
+                            <DialogHeader>
+                                {post?.id ?
+                                    <DialogTitle className='text-amber-700'>Update Post</DialogTitle> :
+                                    <DialogTitle className='text-amber-700'>Create Post</DialogTitle>
+                                }
+                            </DialogHeader>
 
-                                <FormField
-                                    control={form.control}
-                                    name='title'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Title</FormLabel>
-                                            <FormControl>
-                                                <input {...field} placeholder='Title' className='w-full p-2 border rounded-md border-gray-300' />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name='body'
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Body</FormLabel>
-                                            <FormControl>
-                                                <Tiptap body={field.value} onChange={field.onChange} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {mutationCreate.isError && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {(mutationCreate.error as Error)?.message}
-                                    </p>
+                            <FormField
+                                control={form.control}
+                                name='title'
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Title</FormLabel>
+                                        <FormControl>
+                                            <input
+                                                {...field}
+                                                placeholder='Title'
+                                                className='w-full p-2 border rounded-md border-gray-300 focus:outline-none' />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 )}
-
-                                {mutationUpdate.isError && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {(mutationUpdate.error as Error)?.message}
-                                    </p>
+                            />
+                            <FormField
+                                control={form.control}
+                                name='body'
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Body</FormLabel>
+                                        <FormControl>
+                                            <Tiptap body={field.value} onChange={field.onChange} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 )}
+                            />
 
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button onClick={() => setOpen(false)} type='button' variant="outline">Cancel</Button>
-                                    </DialogClose>
-                                    <Button type='submit' className='bg-amber-600 hover:bg-amber-500 hover:cursor-pointer'>
-                                        {mutationCreate.status === 'pending' || mutationUpdate.status === 'pending' ? 'Posting...' : 'Post'}
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Form>
-                </Dialog>
-            }
+                            {mutationCreate.isError && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {(mutationCreate.error as Error)?.message}
+                                </p>
+                            )}
+
+                            {mutationUpdate.isError && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {(mutationUpdate.error as Error)?.message}
+                                </p>
+                            )}
+
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button onClick={() => setOpen(false)} type='button' variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button type='submit' className='bg-amber-700 hover:bg-amber-600 hover:cursor-pointer'>
+                                    {mutationCreate.status === 'pending' || mutationUpdate.status === 'pending' ? 'Posting...' : 'Post'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Form>
+            </Dialog>
         </div>
     )
 }
